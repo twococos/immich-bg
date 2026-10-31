@@ -52,7 +52,9 @@ Comparteix `installer\Output\ImmichBg-Setup-<versió>.exe` (uns 36 MB).
 - **Desinstal·lar:** des de *Configuració › Aplicacions*. Treu l'inici automàtic i pregunta si també cal esborrar la configuració. Les fotos descarregades no s'esborren.
 - Cada equip necessita la seva pròpia clau API, que queda xifrada amb l'usuari de Windows.
 
-Per publicar una versió nova, apuja `<Version>` a `src/ImmichBg/ImmichBg.csproj` i executa `.\publish.ps1`. Cal tenir Inno Setup 6 instal·lat: `winget install JRSoftware.InnoSetup`.
+Cada push a `master` genera automàticament una [release](https://github.com/twococos/immich-bg/releases) amb l'instal·lador (workflow `.github/workflows/release.yml`). La versió és la de `<Version>` a `src/ImmichBg/ImmichBg.csproj` més el número de build (per exemple `0.1.0.12`). També es pot llançar a mà des de la pestanya *Actions*.
+
+Per generar-lo en local, executa `.\publish.ps1`. Cal tenir Inno Setup 6 instal·lat: `winget install JRSoftware.InnoSetup`.
 
 ## Desenvolupament
 

@@ -1,0 +1,57 @@
+# Builds the installer on every push to master and publishes it as a GitHub release.
+# Version: <Version> from the csproj + the build number (e.g. 0.1.0.12), tag v0.1.0.12.
+name: Release
+
+on:
+  push:
+    branches: [master]
+    paths-ignore: ['**.md']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) {
+            choco install innosetup -y --no-progress
+          }
+
+      - name: Compute version
+        id: version
+        shell: pwsh
+        run: |
+          $base = ([xml](Get-Content src/ImmichBg/ImmichBg.csproj)).Project.PropertyGroup.Version | Where-Object { $_ } | Select-Object -First 1
+          "version=$base.${{ github.run_number }}" >> $env:GITHUB_OUTPUT
+
+      - name: Build (tests + exe + installer)
+        shell: pwsh
+        run: ./publish.ps1 -Version ${{ steps.version.outputs.version }}
+
+      - name: Create release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git log -1 --pretty=%B | Out-File notes.md -Encoding utf8
+          gh release create "v$env:VERSION" "installer/Output/ImmichBg-Setup-$env:VERSION.exe" `
+            --target "${{ github.sha }}" `
+            --title "Immich BG $env:VERSION" `
+            --notes-file notes.md `
+            --latest
